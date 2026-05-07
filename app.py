@@ -8,7 +8,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # App configuration
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
 
 # In-memory database (resets when server restarts)
 tasks = [
@@ -26,10 +26,10 @@ def get_next_id():
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({
-        "service": "Task Management API",
+        "message": "Flask Task Management API is running successfully 🚀",
         "version": "1.0",
-        "status": "running",
-        "endpoints": {
+        "available_endpoints": {
+            "GET /": "API information",
             "GET /tasks": "Retrieve all tasks",
             "POST /tasks": "Create a new task",
             "DELETE /tasks/<id>": "Delete a task",
@@ -54,20 +54,22 @@ def get_tasks():
 def add_task():
 
     # Validate JSON body
-    if not request.json:
+    if not request.is_json:
         return jsonify({
             "success": False,
             "error": "Request body must be JSON"
         }), 400
 
+    data = request.get_json()
+
     # Validate title existence
-    if "title" not in request.json:
+    if "title" not in data:
         return jsonify({
             "success": False,
             "error": "Missing 'title' field"
         }), 400
 
-    title = request.json["title"]
+    title = data["title"]
 
     # Validate title type
     if not isinstance(title, str):
@@ -138,11 +140,21 @@ def about():
     }), 200
 
 
+# Handle unknown routes
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "success": False,
+        "error": "Endpoint not found"
+    }), 404
+
+
 # Run application locally
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
 
     app.run(
         host="0.0.0.0",
-        port=port
+        port=port,
+        debug=False
     )
